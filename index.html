@@ -451,6 +451,7 @@
 
         <div class="footer">
             <p>打字练习工具 | 自动循环练习 | 输入正确后自动跳转到下一个</p>
+            <p>在至少有2个字词情况下，输入3个美元符号加空格可以删除当前字词($$$_)</p>
         </div>
     </div>
 
@@ -714,22 +715,11 @@
                 list.push(selectList.splice(randomIndex, 1)[0])
             }
             console.log("list " + list + " selectList " + selectList)
-            // for (const item of selectList) {
-            //     // console.log("iii " + item)
-            //     let score = scoreMap.get(item)
-            //     if (score < currentTarget) {
-            //         for (let i = score; i < currentTarget; i++) {
-            //             const randomIndex = Math.floor(Math.random() * list.length);
-            //             list.splice(randomIndex, 0, item)
-            //         }
-            //     }
-            // }
 
             for (const item of insertList) {
                 const randomIndex = (Math.floor(Math.random() * list.length)) % 3;
                 list.splice(randomIndex, 0, item)
             }
-            //console.log("list2 " + list)
 
             let randomSet = new Set()
             for (const item of list) {
@@ -893,9 +883,6 @@
 
             if (index !== currentIndex) return;
 
-            // console.info("handleInput ")
-
-
             // 如果当前输入已经错误，保持红色样式
             if (hasErrorInCurrentInput) {
                 inputEl.className = 'word-input incorrect';
@@ -933,7 +920,7 @@
             if (e.key === ' ') {
                 //e.preventDefault();
                 setTimeout(() => {
-                    checkWord(index, inputEl.value, true);
+                    checkWord(index, inputEl.value, true, true);
                     if (inputEl.value.trim().length != inputEl.value.length) {
                         inputEl.value = inputEl.value.trim()
                     }
@@ -942,12 +929,19 @@
         }
 
         // 检查字词
-        function checkWord(index, value, forceCheck = false, hasError = false) {
+        function checkWord(index, value, forceCheck = false, space = false) {
             if (!isActive || index !== currentIndex) return;
 
             const inputEl = document.getElementById(`word-input-${index}`);
             const word = currentExercise[index];
-            console.info("word " + word + " value " + value + " hasErrorInCurrentInput " + hasErrorInCurrentInput)
+            //console.info("word " + word + " value " + value + " hasErrorInCurrentInput " + hasErrorInCurrentInput)
+            if(space && value.trim() === '$$$' && scoreMap.size > 1) {
+                scoreMap.delete(word)
+                errorSet.delete(word)
+                saveConfig()
+                moveToNextInput();
+                return;
+            }
 
             // 如果已经错误，保持红色
             if (hasErrorInCurrentInput) {
@@ -1138,7 +1132,7 @@
 
                 errorSet.add(item)
             }
-            if(!inError && lastIsInError) {
+            if (!inError && lastIsInError) {
                 lastIsInError = false
             }
             saveConfig()

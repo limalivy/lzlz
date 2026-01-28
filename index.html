@@ -503,6 +503,8 @@
 
         let inError = false
 
+        let lastIsInError = false
+
 
 
         // 练习配置
@@ -666,6 +668,7 @@
                 }
                 errorSet.clear()
                 inError = true
+                lastIsInError = true
                 console.log("generateNewExercise1 " + currentExercise)
                 return
             } else {
@@ -909,17 +912,18 @@
         // 处理按键事件
         function handleKeyDown(e) {
             if (!isActive) return;
-            // console.info("key " + e.key)
+            // console.info("key " + e.code + "  " +  Date.now())
             const inputEl = e.target;
             const index = parseInt(inputEl.dataset.index);
 
             if (index !== currentIndex) return;
 
             // 删除键按下 - 立即判定为错误
-            if (e.key === 'Backspace' || e.key === 'Delete') {
-                hasErrorInCurrentInput = true;
+            if ((e.code === 'Backspace' || e.code === 'Delete') && inputEl.value.length > 0) {
                 inputEl.className = 'word-input incorrect';
                 errorCount++;
+                checkWord(index, inputEl.value, true);
+                hasErrorInCurrentInput = true;
                 updateStats();
                 //e.preventDefault();
                 return;
@@ -938,12 +942,12 @@
         }
 
         // 检查字词
-        function checkWord(index, value, forceCheck = false) {
+        function checkWord(index, value, forceCheck = false, hasError = false) {
             if (!isActive || index !== currentIndex) return;
 
             const inputEl = document.getElementById(`word-input-${index}`);
             const word = currentExercise[index];
-            // console.info("word " + word + " value " + value + " hasErrorInCurrentInput " + hasErrorInCurrentInput)
+            console.info("word " + word + " value " + value + " hasErrorInCurrentInput " + hasErrorInCurrentInput)
 
             // 如果已经错误，保持红色
             if (hasErrorInCurrentInput) {
@@ -959,7 +963,7 @@
                     // completedCount++;
                     moveToNextInput();
                 }
-                console.info("error 1")
+                console.log("000")
                 return;
             }
 
@@ -975,6 +979,7 @@
                 updateScore(word, true)
                 // 更新得分显示
                 updateWordScore(word);
+                console.log("111")
             } else if (value.length > 0) {
                 // 输入有内容但不正确
                 hasErrorInCurrentInput = true;
@@ -983,6 +988,7 @@
                 updateScore(word, false)
                 // 更新得分显示
                 updateWordScore(word);
+                console.log("222")
             }
             updateStats();
         }
@@ -1111,15 +1117,15 @@
         }
 
         function updateScore(item, right) {
-            // console.log("updateScore0 " + item + "  " + scoreMap.get(item));
+            console.log("inError " + inError + " lastIsInError " + lastIsInError);
             if (right) {
-                if (!inError) {
+                if (!inError && !lastIsInError) {
                     scoreMap.set(item, scoreMap.get(item) + 1)
                     // console.log("updateScore1 " + item + "  " + scoreMap.get(item));
                     completedCount++
                 }
             } else {
-                if (!inError) {
+                if (!inError && !lastIsInError) {
                     let score = scoreMap.get(item) - penalty
                     if (score < 0) {
                         score = 0
@@ -1131,6 +1137,9 @@
                 }
 
                 errorSet.add(item)
+            }
+            if(!inError && lastIsInError) {
+                lastIsInError = false
             }
             saveConfig()
         }

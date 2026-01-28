@@ -291,7 +291,6 @@
             /* 添加文本对齐方式 */
             text-align-last: center;
             overflow: hidden;
-            text-overflow: ellipsis;
         }
 
         /* 添加一个特殊类用于左对齐 */
@@ -758,7 +757,7 @@
                 // 设置输入框宽度（根据字词长度）
                 const wordLength = word.length;
                 const minWidth = 60;
-                const width = Math.max(minWidth, wordLength * 30);
+                const width = Math.max(minWidth, wordLength * 30 + 10);
                 wordInput.style.width = `${width}px`;
 
                 // 根据宽度决定对齐方式

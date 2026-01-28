@@ -935,10 +935,12 @@
             const inputEl = document.getElementById(`word-input-${index}`);
             const word = currentExercise[index];
             //console.info("word " + word + " value " + value + " hasErrorInCurrentInput " + hasErrorInCurrentInput)
-            if(space && value.trim() === '$$$' && scoreMap.size > 1) {
-                scoreMap.delete(word)
+            if (space && value.trim() === '$$$') {
                 errorSet.delete(word)
-                saveConfig()
+                if (scoreMap.size > 1) {
+                    scoreMap.delete(word)
+                    saveConfig()
+                }
                 moveToNextInput();
                 return;
             }

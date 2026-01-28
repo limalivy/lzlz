@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="zh-CN">
 
@@ -57,7 +56,6 @@
 
         .settings-btn:hover {
             background-color: #2980b9;
-            /* transform: rotate(30deg); */
         }
 
         .modal-overlay {
@@ -279,7 +277,6 @@
             font-size: 1.3rem;
             padding: 10px;
             text-align: center;
-            /* 默认居中 */
             border: 2px solid #ddd;
             border-radius: 6px;
             outline: none;
@@ -288,12 +285,10 @@
             max-width: 300px;
             width: auto;
             background-color: white;
-            /* 添加文本对齐方式 */
             text-align-last: center;
             overflow: hidden;
         }
 
-        /* 添加一个特殊类用于左对齐 */
         .word-input.left-align {
             text-align: left;
             text-align-last: left;
@@ -363,6 +358,86 @@
             font-size: 0.9rem;
         }
 
+        /* 新增：进度显示区域样式 */
+        .progress-container {
+            width: 100%;
+            max-width: 1000px;
+            margin-top: 20px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            background-color: white;
+        }
+
+        .progress-header {
+            background-color: #3498db;
+            color: white;
+            padding: 15px 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 0.3s ease;
+        }
+
+        .progress-header:hover {
+            background-color: #2980b9;
+        }
+
+        .progress-header h3 {
+            margin: 0;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .toggle-icon {
+            font-size: 1.5rem;
+            transition: transform 0.3s ease;
+        }
+
+        .progress-header.collapsed .toggle-icon {
+            transform: rotate(-90deg);
+        }
+
+        .progress-content {
+            max-height: 400px;
+            overflow-y: auto;
+            transition: max-height 0.3s ease;
+        }
+
+        .progress-content.collapsed {
+            max-height: 0;
+            overflow: hidden;
+        }
+
+        .progress-textarea {
+            width: 100%;
+            height: 350px;
+            padding: 20px;
+            border: none;
+            font-family: monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            resize: none;
+            background-color: #f8f9fa;
+            color: #333;
+            white-space: pre;
+        }
+
+        .progress-textarea:focus {
+            outline: none;
+        }
+
+        .progress-stats {
+            padding: 15px 20px;
+            background-color: #f8f9fa;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            color: #7f8c8d;
+        }
+
         @media (max-width: 768px) {
             .container {
                 padding: 25px;
@@ -397,6 +472,15 @@
                 width: 36px;
                 height: 36px;
                 font-size: 1rem;
+            }
+
+            .progress-header h3 {
+                font-size: 1.1rem;
+            }
+
+            .progress-textarea {
+                font-size: 0.85rem;
+                padding: 15px;
             }
         }
     </style>
@@ -440,6 +524,21 @@
         </div>
     </div>
 
+    <!-- 新增：进度显示区域 -->
+    <div class="progress-container">
+        <div class="progress-header" id="progress-header">
+            <h3>📊 字词练习进度详情</h3>
+            <span class="toggle-icon">▼</span>
+        </div>
+        <div class="progress-content" id="progress-content">
+            <textarea class="progress-textarea" id="progress-textarea" readonly></textarea>
+            <div class="progress-stats">
+                <div id="progress-summary">总计：0个字词</div>
+                <div id="progress-update">最后更新：--</div>
+            </div>
+        </div>
+    </div>
+
     <!-- 设置弹窗 -->
     <div class="modal-overlay" id="modal-overlay">
         <div class="modal">
@@ -470,7 +569,6 @@
     </div>
 
     <script>
-
         // 字词库 - 可以扩展
         const wordBank = [];
         const insertList = [];
@@ -513,7 +611,6 @@
         const resetBtn = document.getElementById('reset-btn');
         const completedEl = document.getElementById('completed');
         const groupCountEl = document.getElementById('group-count');
-        // const errorCountEl = document.getElementById('error-count');
         const settingsBtn = document.getElementById('settings-btn');
         const modalOverlay = document.getElementById('modal-overlay');
         const closeModalBtn = document.getElementById('close-modal');
@@ -523,10 +620,17 @@
         const wordBankInput = document.getElementById('word-bank');
         const wordsPerGroupInput = document.getElementById('words-per-group');
         const titleElement = document.querySelector('h1');
+        
+        // 新增：进度显示相关DOM元素
+        const progressHeader = document.getElementById('progress-header');
+        const progressContent = document.getElementById('progress-content');
+        const progressTextarea = document.getElementById('progress-textarea');
+        const progressSummary = document.getElementById('progress-summary');
+        const progressUpdate = document.getElementById('progress-update');
 
         // 初始化
         function init() {
-            loadFromLoacl()
+            loadFromLoacl();
             startNewExercise();
 
             // 更新标题
@@ -555,9 +659,101 @@
                 }
             });
 
+            // 新增：进度显示区域的折叠功能
+            progressHeader.addEventListener('click', toggleProgressPanel);
+
+            // 初始化进度显示
+            updateProgressDisplay();
+
             window.addEventListener('beforeunload', () => {
-                saveConfig()
+                saveConfig();
             });
+        }
+
+        // 新增：切换进度面板显示/隐藏
+        function toggleProgressPanel() {
+            progressHeader.classList.toggle('collapsed');
+            progressContent.classList.toggle('collapsed');
+        }
+
+        // 新增：更新进度显示
+        function updateProgressDisplay() {
+            if (!scoreMap || scoreMap.size === 0) {
+                progressTextarea.value = '暂无练习进度数据';
+                progressSummary.textContent = '总计：0个字词';
+                progressUpdate.textContent = '最后更新：--';
+                return;
+            }
+
+            // 将scoreMap转换为数组并按分数排序（降序）
+            const entries = Array.from(scoreMap.entries());
+            entries.sort((a, b) => b[1] - a[1]);
+
+            // 统计不同分数段的数量
+            const scoreDistribution = {};
+            let totalScore = 0;
+            let belowTargetCount = 0;
+            
+            entries.forEach(([word, score]) => {
+                totalScore += score;
+                if (score < currentTarget) {
+                    belowTargetCount++;
+                }
+                
+                // 统计分数分布
+                const scoreRange = Math.floor(score / 10) * 10;
+                scoreDistribution[scoreRange] = (scoreDistribution[scoreRange] || 0) + 1;
+            });
+
+            // 构建显示内容
+            let content = '字词练习进度详情\n';
+            content += '='.repeat(40) + '\n\n';
+            
+            // 总体统计
+            content += '【总体统计】\n';
+            content += `字词总数：${scoreMap.size}\n`;
+            content += `当前目标：${currentTarget}\n`;
+            content += `未达标字词：${belowTargetCount}个\n`;
+            content += `总练习次数：${totalScore}\n`;
+            content += `平均练习次数：${(totalScore / scoreMap.size).toFixed(2)}\n\n`;
+            
+            // 分数分布
+            content += '【分数分布】\n';
+            const sortedRanges = Object.keys(scoreDistribution).sort((a, b) => a - b);
+            sortedRanges.forEach(range => {
+                const count = scoreDistribution[range];
+                const percentage = ((count / scoreMap.size) * 100).toFixed(1);
+                const barLength = Math.round((count / scoreMap.size) * 30);
+                const bar = '█'.repeat(barLength);
+                content += `${range}-${parseInt(range)+9}分：${bar} ${count}个 (${percentage}%)\n`;
+            });
+            
+            content += '\n';
+            
+            // 详细字词列表
+            content += '【详细字词列表】\n';
+            content += '='.repeat(40) + '\n';
+            content += '字词'.padEnd(6) + '分数'.padEnd(8) + '状态'.padEnd(8) + '进度条\n';
+            content += '-'.repeat(40) + '\n';
+
+            entries.forEach(([word, score]) => {
+                const status = score >= currentTarget ? '✅达标' : '🚫未达标';
+                const progress = Math.min(100, (score / currentTarget) * 100);
+                const barLength = Math.round(progress / 10);
+                const bar = '█'.repeat(barLength) + '░'.repeat(10 - barLength);
+                
+                // 处理中文字符对齐
+                const wordDisplay = word.padEnd(6);
+                const scoreDisplay = score.toString().padEnd(8);
+                const statusDisplay = status.padEnd(8);
+                
+                content += `${wordDisplay}${scoreDisplay}${statusDisplay}[${bar}] ${progress.toFixed(1)}%\n`;
+            });
+
+            // 更新DOM
+            progressTextarea.value = content;
+            progressSummary.textContent = `总计：${scoreMap.size}个字词，${belowTargetCount}个未达标`;
+            progressUpdate.textContent = `最后更新：${new Date().toLocaleTimeString()}`;
         }
 
         // 打开设置弹窗
@@ -612,6 +808,9 @@
             // 重新开始练习
             resetCurrentGroup();
             startNewExercise();
+
+            // 更新进度显示
+            updateProgressDisplay();
 
             // 关闭弹窗
             closeSettingsModal();
@@ -689,22 +888,11 @@
                 list.push(selectList.splice(randomIndex, 1)[0])
             }
             console.log("list " + list + " selectList " + selectList)
-            // for (const item of selectList) {
-            //     // console.log("iii " + item)
-            //     let score = scoreMap.get(item)
-            //     if (score < currentTarget) {
-            //         for (let i = score; i < currentTarget; i++) {
-            //             const randomIndex = Math.floor(Math.random() * list.length);
-            //             list.splice(randomIndex, 0, item)
-            //         }
-            //     }
-            // }
 
             for (const item of insertList) {
                 const randomIndex = (Math.floor(Math.random() * list.length)) % 3;
                 list.splice(randomIndex, 0, item)
             }
-            //console.log("list2 " + list)
 
             let randomSet = new Set()
             for (const item of list) {
@@ -721,10 +909,6 @@
             }
             console.log("2")
 
-            // for (let i = 0; i < count; i++) {
-            //     currentExercise.push(list[0]);
-            //     list.splice(0, 1)
-            // }
             wordBank.length = 0
             console.log("generateNewExercise2 " + currentExercise)
         }
@@ -769,11 +953,9 @@
                 wordInput.addEventListener('input', handleInput);
                 wordInput.addEventListener('keydown', handleKeyDown);
                 wordInput.addEventListener('compositionstart', () => {
-                    // console.log("compositionstart")
                     isComposition = true;
                 });
                 wordInput.addEventListener('compositionend', () => {
-                    // console.log("compositionend")
                     isComposition = false;
                 });
 
@@ -809,7 +991,6 @@
         function startExercise() {
             isActive = true;
             currentIndex = 0;
-            // completedCount = 0;
             hasErrorInCurrentInput = false;
 
             // 启用第一个输入框
@@ -843,9 +1024,6 @@
 
             if (index !== currentIndex) return;
 
-            // console.info("handleInput ")
-
-
             // 如果当前输入已经错误，保持红色样式
             if (hasErrorInCurrentInput) {
                 inputEl.className = 'word-input incorrect';
@@ -862,7 +1040,6 @@
         // 处理按键事件
         function handleKeyDown(e) {
             if (!isActive) return;
-            // console.info("key " + e.key)
             const inputEl = e.target;
             const index = parseInt(inputEl.dataset.index);
 
@@ -874,13 +1051,11 @@
                 inputEl.className = 'word-input incorrect';
                 errorCount++;
                 updateStats();
-                //e.preventDefault();
                 return;
             }
 
             // 空格键按下 - 提交当前字词
             if (e.key === ' ') {
-                //e.preventDefault();
                 setTimeout(() => {
                     checkWord(index, inputEl.value, true);
                     if (inputEl.value.trim().length != inputEl.value.length) {
@@ -896,7 +1071,6 @@
 
             const inputEl = document.getElementById(`word-input-${index}`);
             const word = currentExercise[index];
-            // console.info("word " + word + " value " + value + " hasErrorInCurrentInput " + hasErrorInCurrentInput)
 
             // 如果已经错误，保持红色
             if (hasErrorInCurrentInput) {
@@ -909,7 +1083,6 @@
                     inputEl.disabled = true;
                     inputEl.value = word;
 
-                    // completedCount++;
                     moveToNextInput();
                 }
                 console.info("error 1")
@@ -923,7 +1096,6 @@
                 inputEl.disabled = true;
                 inputEl.value = word;
 
-                // completedCount++;
                 moveToNextInput();
                 updateScore(word, true)
             } else if (value.length > 0) {
@@ -995,6 +1167,8 @@
                 firstInput.focus();
             }
 
+            // 更新进度显示
+            updateProgressDisplay();
             updateStats();
         }
 
@@ -1028,12 +1202,14 @@
         // 设置字词库
         function setWordBank(newWordBank) {
             wordBank.length = 0;
-            // wordBank.push(...newWordBank);
             scoreMap.clear()
             for (const item of newWordBank) {
                 scoreMap.set(item, 0)
             }
             currentTarget = baseTarget
+            
+            // 更新进度显示
+            updateProgressDisplay();
         }
 
         // =============== 辅助函数 ===============
@@ -1044,14 +1220,12 @@
             scoreMap.forEach((v, k) => {
                 count += v
             });
-            // console.log("size " + scoreMap.size + " count " + count + " currentTarget " + currentTarget)
             const progress = (scoreMap.size > 0 ? count / (scoreMap.size * currentTarget) : 0) * 100;
 
             // 格式化为百分比
             const percentage = Math.min(100, Math.max(0, progress));
             completedEl.textContent = `${percentage.toFixed(1)}%`;
             groupCountEl.textContent = currentTarget;
-            // errorCountEl.textContent = errorCount;
         }
 
         function updateScore(item, right) {
@@ -1076,11 +1250,13 @@
 
                 errorSet.add(item)
             }
-            saveConfig()
+            
+            // 更新进度显示
+            updateProgressDisplay();
+            saveConfig();
         }
 
         function saveConfig() {
-            // console.log("saveConfig")
             const data = {
                 scoreMap: Array.from(scoreMap.entries()),
                 currentTarget,

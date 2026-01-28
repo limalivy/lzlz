@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="zh-CN">
 
@@ -34,6 +35,7 @@
             padding: 40px;
             margin: 20px;
             position: relative;
+            
         }
 
         .settings-btn {
@@ -277,13 +279,27 @@
             font-size: 1.3rem;
             padding: 10px;
             text-align: center;
+            /* 默认居中 */
             border: 2px solid #ddd;
             border-radius: 6px;
             outline: none;
             transition: all 0.3s ease;
             min-width: 60px;
+            max-width: 300px;
             width: auto;
             background-color: white;
+            /* 添加文本对齐方式 */
+            text-align-last: center;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* 添加一个特殊类用于左对齐 */
+        .word-input.left-align {
+            text-align: left;
+            text-align-last: left;
+            padding-left: 10px;
+            padding-right: 10px;
         }
 
         .word-input.pending {
@@ -318,6 +334,7 @@
             gap: 15px;
             justify-content: center;
             margin-top: 20px;
+            z-index: 2;
         }
 
         button {
@@ -328,6 +345,7 @@
             cursor: pointer;
             transition: all 0.3s ease;
             font-weight: 600;
+            z-index: 2;
         }
 
         #reset-btn {
@@ -715,7 +733,8 @@
         // 渲染字词和输入框
         function renderWords() {
             wordsContainerEl.innerHTML = '';
-
+            // 获取屏幕宽度的一半
+            const screenHalfWidth = window.innerWidth / 2;
             currentExercise.forEach((word, index) => {
                 // 创建字词容器
                 const wordItem = document.createElement('div');
@@ -741,6 +760,11 @@
                 const minWidth = 60;
                 const width = Math.max(minWidth, wordLength * 30);
                 wordInput.style.width = `${width}px`;
+
+                // 根据宽度决定对齐方式
+                if (width > screenHalfWidth) {
+                    wordInput.classList.add('left-align');
+                }
 
                 // 添加事件监听
                 wordInput.addEventListener('input', handleInput);
@@ -1081,6 +1105,10 @@
                 console.error('加载数据失败:', e);
                 return null;
             }
+        }
+
+        function clearConfig(){
+            localStorage.removeItem('typingData');
         }
 
         // 页面加载完成后初始化

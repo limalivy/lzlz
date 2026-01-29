@@ -475,8 +475,17 @@
                     <input type="text" id="exercise-title" class="form-control" placeholder="请输入练习标题">
                 </div>
                 <div class="form-group">
-                    <label for="word-bank">字词库 (每行一个字或词)</label>
-                    <textarea id="word-bank" class="form-control" placeholder="请输入字词，每行一个"></textarea>
+                    <div class="form-group">
+                        <label for="word-bank"
+                            style="display: flex; justify-content: space-between; align-items: center;">
+                            <span>字词库 (每行一个字或词)</span>
+                            <a href="javascript:void(0);" id="shuffle-link"
+                                style="font-size: 0.9rem; font-weight: normal; color: #3498db; text-decoration: none; cursor: pointer; margin-left: 10px; padding: 2px 8px; border: 1px solid #3498db; border-radius: 4px;">
+                                列表乱序
+                            </a>
+                        </label>
+                        <textarea id="word-bank" class="form-control" placeholder="请输入字词，每行一个"></textarea>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label for="words-per-group">每组字词数量</label>
@@ -583,6 +592,8 @@
             window.addEventListener('beforeunload', () => {
                 saveConfig()
             });
+
+            document.getElementById('shuffle-link').addEventListener('click', shuffleWordBank);
         }
 
         // 打开设置弹窗
@@ -817,7 +828,7 @@
                     // 这时候需要把后面还没有练习的字放到最前面
                     let newMap = new Map()
                     for (const zi of selectList) {
-                        newMap.set(zi, scoreMap.get(zi))
+                        newMap.set(zi, getScore(zi))
                     }
                     scoreMap.forEach((v, k) => {
                         newMap.set(k, v)
@@ -884,7 +895,7 @@
                 wordScore.className = 'word-score';
                 wordScore.id = `word-score-${index}`;
                 // 获取当前得分
-                const score = scoreMap.get(word) || 0;
+                const score = getScore(word) || 0;
                 wordScore.textContent = `${score}`;
                 wordItem.appendChild(wordScore);
 
@@ -955,7 +966,7 @@
 
         // 更新得分显示
         function updateWordScore(word) {
-            const score = scoreMap.get(word) || 0;
+            const score = getScore(word) || 0;
             // 找到所有包含这个词的元素并更新
             const wordItems = document.querySelectorAll('.word-item');
             wordItems.forEach(item => {
@@ -1236,24 +1247,50 @@
             // errorCountEl.textContent = errorCount;
         }
 
+        function shuffleWordBank() {
+            const text = wordBankInput.value.trim();
+            if (!text) return;
+
+            // 分割为数组
+            const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+
+            if (lines.length < 2) return; // 至少2行才需要乱序
+
+            // Fisher-Yates 洗牌算法
+            for (let i = lines.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [lines[i], lines[j]] = [lines[j], lines[i]];
+            }
+
+            // 更新文本框内容
+            wordBankInput.value = lines.join('\n');
+        }
+
+        function getScore(item){
+            if(scoreMap.has(item)) {
+                return scoreMap.get(item)
+            }
+            return 0
+        }
+
         function updateScore(item, right) {
             console.log("inError " + inError + " lastIsInError " + lastIsInError);
             if (right) {
                 if (!inError && !lastIsInError) {
-                    scoreMap.set(item, scoreMap.get(item) + 1)
-                    // console.log("updateScore1 " + item + "  " + scoreMap.get(item));
+                    scoreMap.set(item, getScore(item) + 1)
+                    // console.log("updateScore1 " + item + "  " + getScore(item));
                     completedCount++
                 }
             } else {
                 if (!inError && !lastIsInError) {
-                    let score = scoreMap.get(item) - penalty
+                    let score = getScore(item) - penalty
                     if (score < 0) {
                         score = 0
                     }
-                    let diff = scoreMap.get(item) - score
+                    let diff = getScore(item) - score
                     completedCount -= diff
                     scoreMap.set(item, score)
-                    // console.log("updateScore2 " + item + "  " + scoreMap.get(item));
+                    // console.log("updateScore2 " + item + "  " + getScore(item));
                 }
 
                 errorSet.add(item)

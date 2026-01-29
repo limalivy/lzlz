@@ -464,13 +464,19 @@
             </div>
             <div class="modal-body">
                 <div class="form-group">
+                    <label for="preset-select">常用练习集（非必选）</label>
+                    <select id="preset-select" class="form-control">
+                        <option value="">选择预设练习集...（非必选）</option>
+                        <!-- 动态加载的选项将在这里 -->
+                    </select>
+                </div>
+                <div class="form-group">
                     <label for="exercise-title">练习标题</label>
                     <input type="text" id="exercise-title" class="form-control" placeholder="请输入练习标题">
                 </div>
                 <div class="form-group">
                     <label for="word-bank">字词库 (每行一个字或词)</label>
                     <textarea id="word-bank" class="form-control" placeholder="请输入字词，每行一个"></textarea>
-                    <div class="form-hint">每行输入一个字或词，将用于随机生成练习内容</div>
                 </div>
                 <div class="form-group">
                     <label for="words-per-group">每组字词数量</label>
@@ -535,6 +541,7 @@
         const closeModalBtn = document.getElementById('close-modal');
         const cancelBtn = document.getElementById('cancel-btn');
         const saveBtn = document.getElementById('save-btn');
+        const presetSelectEl = document.getElementById('preset-select');
         const exerciseTitleInput = document.getElementById('exercise-title');
         const wordBankInput = document.getElementById('word-bank');
         const wordsPerGroupInput = document.getElementById('words-per-group');
@@ -544,6 +551,7 @@
         function init() {
             loadFromLoacl()
             startNewExercise();
+
 
             // 更新标题
             titleElement.textContent = exerciseConfig.title;
@@ -583,6 +591,9 @@
             wordBankInput.value = wordBank.join('\n');
             wordsPerGroupInput.value = exerciseConfig.wordsPerGroup;
 
+            // 加载预设列表
+            loadPresets();
+
             // 显示弹窗
             modalOverlay.classList.add('active');
 
@@ -596,6 +607,11 @@
 
             // 恢复背景滚动
             document.body.style.overflow = '';
+
+            // 重置预设选择器
+            if (presetSelectEl) {
+                presetSelectEl.value = '';
+            }
         }
 
         // 保存设置
@@ -625,12 +641,112 @@
                 exerciseConfig.wordsPerGroup = newWordsPerGroup;
             }
 
+            // 重置预设选择
+            if (presetSelectEl) {
+                presetSelectEl.value = '';
+            }
+
             // 重新开始练习
             resetCurrentGroup();
             startNewExercise();
 
             // 关闭弹窗
             closeSettingsModal();
+        }
+
+        async function loadPresets() {
+            try {
+                // 清空现有选项（除了第一个提示选项）
+                while (presetSelectEl.options.length > 1) {
+                    presetSelectEl.remove(1);
+                }
+
+                // 重置为默认选项
+                presetSelectEl.value = '';
+
+                // 添加一个加载中的选项
+                const loadingOption = document.createElement('option');
+                loadingOption.value = '';
+                loadingOption.disabled = true;
+                loadingOption.textContent = '加载预设列表中...';
+                presetSelectEl.appendChild(loadingOption);
+
+                // 尝试从json目录加载预设列表
+                const response = await fetch('./json/presets.json');
+                if (!response.ok) {
+                    throw new Error('无法加载预设列表');
+                }
+
+                const presets = await response.json();
+
+                // 移除加载中的选项
+                presetSelectEl.removeChild(loadingOption);
+
+                // 添加预设选项
+                presets.forEach(preset => {
+                    const option = document.createElement('option');
+                    option.value = preset.file;
+                    option.textContent = preset.name;
+                    if (preset.description) {
+                        option.title = preset.description;
+                    }
+                    presetSelectEl.appendChild(option);
+                });
+
+                // 移除可能已存在的事件监听器，然后重新添加
+                const newSelectEl = presetSelectEl.cloneNode(true);
+                presetSelectEl.parentNode.replaceChild(newSelectEl, presetSelectEl);
+                presetSelectEl = newSelectEl; // 更新引用
+
+                // 添加选择事件监听
+                presetSelectEl.addEventListener('change', async function () {
+                    if (this.value) {
+                        await loadPresetData(this.value);
+                    }
+                });
+
+            } catch (error) {
+                console.warn('无法加载预设练习集:', error);
+
+                // 移除加载中的选项（如果存在）
+                if (presetSelectEl.options.length > 1 && presetSelectEl.options[1].textContent === '加载预设列表中...') {
+                    presetSelectEl.removeChild(presetSelectEl.options[1]);
+                }
+
+                // 添加一个禁用选项提示用户
+                const option = document.createElement('option');
+                option.disabled = true;
+                option.textContent = '无法加载预设练习集';
+                presetSelectEl.appendChild(option);
+            }
+        }
+
+        async function loadPresetData(filename) {
+            try {
+                const response = await fetch(`./json/${filename}`);
+                if (!response.ok) {
+                    throw new Error('无法加载预设数据');
+                }
+
+                const presetData = await response.json();
+
+                // 更新界面
+                if (presetData.title) {
+                    exerciseTitleInput.value = presetData.title;
+                }
+
+                if (presetData.words && Array.isArray(presetData.words)) {
+                    wordBankInput.value = presetData.words.join('\n');
+                }
+
+                if (presetData.wordsPerGroup) {
+                    wordsPerGroupInput.value = presetData.wordsPerGroup;
+                }
+
+            } catch (error) {
+                console.error('加载预设数据失败:', error);
+                alert('加载预设练习集失败，请检查文件是否存在');
+            }
         }
 
         function loadFromLoacl() {

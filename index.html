@@ -430,6 +430,10 @@
 
         <div class="stats">
             <div class="stat-item">
+                <div class="stat-value" id="completed_zi">0/0</div>
+                <div class="stat-label">达标字词数</div>
+            </div>
+            <div class="stat-item">
                 <div class="stat-value" id="completed">0/10</div>
                 <div class="stat-label">当前目标进度</div>
             </div>
@@ -546,6 +550,7 @@
         const wordsContainerEl = document.getElementById('words-container');
         const resetBtn = document.getElementById('reset-btn');
         const completedEl = document.getElementById('completed');
+        const completedZiEl = document.getElementById('completed_zi');
         const groupCountEl = document.getElementById('group-count');
         // const errorCountEl = document.getElementById('error-count');
         const settingsBtn = document.getElementById('settings-btn');
@@ -1243,7 +1248,11 @@
         // 更新统计数据
         function updateStats() {
             let count = 0
+            let completedZiCount = 0
             scoreMap.forEach((v, k) => {
+                if(v >= currentTarget) {
+                    completedZiCount++
+                }
                 count += v
             });
             // console.log("size " + scoreMap.size + " count " + count + " currentTarget " + currentTarget)
@@ -1252,6 +1261,7 @@
             // 格式化为百分比
             const percentage = Math.min(100, Math.max(0, progress));
             completedEl.textContent = `${percentage.toFixed(1)}%`;
+            completedZiEl.textContent = `${completedZiCount}/${scoreMap.size}`;
             groupCountEl.textContent = currentTarget;
             // errorCountEl.textContent = errorCount;
         }

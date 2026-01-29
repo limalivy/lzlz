@@ -502,7 +502,7 @@
     <script>
         // 字词库 - 可以扩展
         const wordBank = [];
-        const insertList = [];
+        let insertList = [];
 
         const baseTarget = 5;
         // 一次错误惩罚多少分
@@ -793,7 +793,7 @@
         function generateNewExercise() {
             currentExercise = [];
             wordBank.length = 0
-            // console.log("generateNewExercise errorSet size " + errorSet.size)
+            console.log("generateNewExercise errorSet size " + errorSet.size + " => " + Array.from(errorSet))
             if (errorSet.size > 0) {
                 for (const item of errorSet.values()) {
                     for (let i = 0; i < pealtyRepeat; i++) {
@@ -815,7 +815,7 @@
             let diffCount = 0
             while (true) {
                 scoreMap.forEach((v, k) => {
-                    //console.log("== k " + k + " v " + v + " currentTarget " + currentTarget)
+                    // console.log("== k " + k + " v " + v + " currentTarget " + currentTarget)
                     if (v < currentTarget && selectList.length < 30) {
                         diffCount += currentTarget - v
                         if (!selectList.includes(k)) {
@@ -850,12 +850,15 @@
                 const randomIndex = Math.floor(Math.random() * selectList.length);
                 list.push(selectList.splice(randomIndex, 1)[0])
             }
-            console.log("list " + list + " selectList " + selectList)
+            // console.log("list1 " + list )
 
             for (const item of insertList) {
                 const randomIndex = (Math.floor(Math.random() * list.length)) % 3;
                 list.splice(randomIndex, 0, item)
             }
+            insertList = []
+
+            // console.log("list2 " + list )
 
             let randomSet = new Set()
             for (const item of list) {
@@ -863,14 +866,14 @@
             }
 
             const count = exerciseConfig.wordsPerGroup;
-            console.log("1")
+            // console.log("1")
             for (const item of randomSet.values()) {
                 if (currentExercise.length > count) {
                     break
                 }
                 currentExercise.push(item)
             }
-            console.log("2")
+            // console.log("2")
 
             // for (let i = 0; i < count; i++) {
             //     currentExercise.push(list[0]);
@@ -1176,7 +1179,7 @@
                 scoreMap.set(key, 0);
             }
             inError = false
-            insertList.length = 0
+            insertList = []
 
             // 更新所有得分显示
             currentExercise.forEach(word => {
@@ -1275,7 +1278,7 @@
         }
 
         function updateScore(item, right) {
-            console.log("inError " + inError + " lastIsInError " + lastIsInError);
+            // console.log("inError " + inError + " lastIsInError " + lastIsInError);
             if (right) {
                 if (!inError && !lastIsInError) {
                     scoreMap.set(item, getScore(item) + 1)

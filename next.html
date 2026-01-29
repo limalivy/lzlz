@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>复古打字机打字练习</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background-color: #2c2c2c;
+            color: #333;
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Courier New', Courier, monospace;
+            padding: 20px;
+            background-image: 
+                radial-gradient(circle at 25% 25%, rgba(255,255,255,0.05) 1px, transparent 1px),
+                radial-gradient(circle at 75% 75%, rgba(255,255,255,0.05) 1px, transparent 1px);
+            background-size: 40px 40px, 40px 40px;
+            background-position: 0 0, 20px 20px;
+        }
+        
+        /* 打字机主体 */
+        .typewriter-machine {
+            width: 800px;
+            max-width: 95%;
+            background: linear-gradient(to bottom, #3a3a3a, #2a2a2a, #1a1a1a);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 
+                0 15px 35px rgba(0, 0, 0, 0.7),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.8);
+            border: 1px solid #444;
+            position: relative;
+        }
+        
+        /* 打字机顶部装饰 */
+        .typewriter-machine::before {
+            content: "";
+            position: absolute;
+            top: -10px;
+            left: 5%;
+            right: 5%;
+            height: 12px;
+            background: linear-gradient(to bottom, #555, #333);
+            border-radius: 6px 6px 0 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+        
+        /* 打字机面板 */
+        .typewriter-panel {
+            background-color: #111;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 
+                inset 0 0 15px rgba(0, 0, 0, 0.8),
+                0 1px 0 rgba(255, 255, 255, 0.05);
+            border: 1px solid #333;
+            margin-bottom: 25px;
+            position: relative;
+            min-height: 300px;
+            overflow: hidden;
+        }
+        
+        /* 纸张效果 */
+        .typewriter-panel::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                linear-gradient(to bottom, transparent 95%, rgba(255,255,255,0.03) 100%),
+                repeating-linear-gradient(
+                    to bottom,
+                    transparent,
+                    transparent 24px,
+                    rgba(255, 255, 255, 0.07) 24px,
+                    rgba(255, 255, 255, 0.07) 25px
+                );
+            pointer-events: none;
+            z-index: 1;
+        }
+        
+        /* 打字机滚轴效果 */
+        .typewriter-panel::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 40px;
+            background: linear-gradient(to bottom, #222, #111);
+            border-bottom: 1px solid #333;
+            z-index: 2;
+        }
+        
+        /* 打字文本区域 */
+        .typing-display {
+            position: relative;
+            z-index: 3;
+            padding: 30px 20px 20px;
+            font-size: 1.8rem;
+            line-height: 2.2;
+            color: #e8e8e8;
+            text-shadow: 0 1px 1px rgba(0,0,0,0.5);
+            letter-spacing: 1px;
+            font-family: 'Courier New', Courier, monospace;
+            min-height: 250px;
+        }
+        
+        /* 打字行样式 */
+        .typing-line {
+            margin-bottom: 5px;
+            padding: 5px 10px;
+            border-radius: 3px;
+            transition: all 0.3s ease;
+            position: relative;
+            min-height: 40px;
+        }
+        
+        .line-pre-3 {
+            color: #666;
+            opacity: 0.5;
+            font-size: 1.4rem;
+            transform: translateY(5px);
+        }
+        
+        .line-pre-2 {
+            color: #888;
+            opacity: 0.7;
+            font-size: 1.6rem;
+            transform: translateY(3px);
+        }
+        
+        .line-pre-1 {
+            color: #aaa;
+            opacity: 0.9;
+            font-size: 1.7rem;
+        }
+        
+        .line-current {
+            color: #fff;
+            background-color: rgba(30, 60, 90, 0.3);
+            border-left: 3px solid #4a9;
+            padding-left: 15px;
+            font-size: 2.1rem;
+            font-weight: bold;
+            box-shadow: 0 0 15px rgba(74, 169, 255, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* 当前行光标效果 */
+        .line-current::after {
+            color: #4a9;
+            animation: blink 1s infinite;
+            margin-left: 5px;
+            font-weight: normal;
+            text-shadow: 0 0 5px #4a9;
+        }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+        
+        .line-prev {
+            color: #8c8;
+            opacity: 0.8;
+            font-size: 1.3rem;
+        }
+        
+        /* 输入区域 */
+        .input-section {
+            background-color: #222;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 
+                inset 0 2px 5px rgba(0, 0, 0, 0.7),
+                0 1px 0 rgba(255, 255, 255, 0.05);
+            border: 1px solid #333;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        
+        .input-section::before {
+            content: "";
+            position: absolute;
+            top: -5px;
+            left: 20px;
+            right: 20px;
+            height: 5px;
+            background: linear-gradient(to bottom, #333, #222);
+            border-radius: 3px 3px 0 0;
+        }
+        
+        .input-container {
+            position: relative;
+        }
+        
+        .typing-input {
+            width: 100%;
+            padding: 18px 20px;
+            font-size: 1.8rem;
+            text-align: center;
+            background-color: #111;
+            color: #e8e8e8;
+            border: 2px solid #444;
+            border-radius: 6px;
+            font-family: 'Courier New', Courier, monospace;
+            letter-spacing: 2px;
+            transition: all 0.3s ease;
+            box-shadow: 
+                inset 0 2px 10px rgba(0, 0, 0, 0.8),
+                0 1px 0 rgba(255, 255, 255, 0.05);
+        }
+        
+        .typing-input:focus {
+            outline: none;
+            border-color: #4a9;
+            box-shadow: 
+                inset 0 2px 10px rgba(0, 0, 0, 0.8),
+                0 0 15px rgba(74, 169, 255, 0.3);
+        }
+        
+        .typing-input.error {
+            border-color: #c44;
+            box-shadow: 
+                inset 0 2px 10px rgba(0, 0, 0, 0.8),
+                0 0 15px rgba(204, 68, 68, 0.4);
+            animation: shake 0.5s;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-3px); }
+            20%, 40%, 60%, 80% { transform: translateX(3px); }
+        }
+        
+        .typing-input.correct {
+            border-color: #4a4;
+            box-shadow: 
+                inset 0 2px 10px rgba(0, 0, 0, 0.8),
+                0 0 10px rgba(68, 204, 68, 0.3);
+        }
+        
+        /* 打字机按键区域 */
+        .keyboard-area {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #1a1a1a;
+            border-radius: 8px;
+            padding: 15px 20px;
+            box-shadow: 
+                inset 0 2px 5px rgba(0, 0, 0, 0.8),
+                0 1px 0 rgba(255, 255, 255, 0.05);
+            border: 1px solid #333;
+        }
+        
+        .stats {
+            display: flex;
+            gap: 25px;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #4a9;
+            text-shadow: 0 0 5px rgba(74, 169, 255, 0.5);
+            font-family: 'Courier New', Courier, monospace;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            color: #aaa;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .typewriter-btn {
+            padding: 10px 18px;
+            background: linear-gradient(to bottom, #444, #333);
+            color: #ddd;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s;
+            font-family: 'Courier New', Courier, monospace;
+            letter-spacing: 1px;
+            box-shadow: 
+                0 2px 4px rgba(0, 0, 0, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            border: 1px solid #555;
+        }
+        
+        .typewriter-btn:hover {
+            background: linear-gradient(to bottom, #4a4a4a, #3a3a3a);
+            color: #fff;
+            box-shadow: 
+                0 2px 6px rgba(0, 0, 0, 0.6),
+                inset 0 1px 0 rgba(255, 255, 255, 0.15);
+        }
+        
+        .typewriter-btn:active {
+            background: linear-gradient(to bottom, #333, #444);
+            box-shadow: 
+                inset 0 2px 4px rgba(0, 0, 0, 0.8),
+                0 1px 0 rgba(255, 255, 255, 0.05);
+        }
+        
+        .typewriter-btn.reset {
+            background: linear-gradient(to bottom, #633, #522);
+        }
+        
+        .typewriter-btn.reset:hover {
+            background: linear-gradient(to bottom, #744, #633);
+        }
+        
+        /* 打字机侧边装饰 */
+        .typewriter-side {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 15px;
+            background: linear-gradient(to right, #333, #222, #333);
+            border-radius: 3px;
+        }
+        
+        .typewriter-side.left {
+            left: -8px;
+            box-shadow: -3px 0 10px rgba(0,0,0,0.5);
+        }
+        
+        .typewriter-side.right {
+            right: -8px;
+            box-shadow: 3px 0 10px rgba(0,0,0,0.5);
+        }
+        
+        /* 打字机底部装饰 */
+        .typewriter-feet {
+            position: absolute;
+            bottom: -12px;
+            width: 30px;
+            height: 12px;
+            background: linear-gradient(to bottom, #555, #333);
+            border-radius: 0 0 4px 4px;
+        }
+        
+        .typewriter-feet.left {
+            left: 20%;
+        }
+        
+        .typewriter-feet.right {
+            right: 20%;
+        }
+        
+        /* 打字机品牌标志 */
+        .brand-label {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            color: #888;
+            font-size: 0.9rem;
+            letter-spacing: 2px;
+            z-index: 10;
+        }
+        
+        /* 打字机旋钮 */
+        .typewriter-knob {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: radial-gradient(circle at 30% 30%, #666, #333);
+            border-radius: 50%;
+            box-shadow: 
+                0 2px 4px rgba(0,0,0,0.7),
+                inset 0 1px 1px rgba(255,255,255,0.1);
+            border: 1px solid #444;
+            z-index: 10;
+        }
+        
+        .knob-1 {
+            top: 20px;
+            left: 30px;
+        }
+        
+        .knob-2 {
+            top: 20px;
+            left: 60px;
+        }
+        
+        /* 响应式调整 */
+        @media (max-width: 768px) {
+            .typewriter-machine {
+                width: 95%;
+                padding: 15px;
+            }
+            
+            .typing-display {
+                font-size: 1.5rem;
+                line-height: 1.8;
+                min-height: 200px;
+                padding: 25px 15px 15px;
+            }
+            
+            .line-current {
+                font-size: 1.8rem;
+            }
+            
+            .typing-input {
+                font-size: 1.5rem;
+                padding: 15px;
+            }
+            
+            .keyboard-area {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .stats {
+                width: 100%;
+                justify-content: space-around;
+            }
+        }
+        
+        /* 打字机纹理 */
+        .typewriter-texture {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                linear-gradient(90deg, transparent 79px, rgba(255,255,255,0.02) 79px, rgba(255,255,255,0.02) 81px, transparent 81px),
+                linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px);
+            background-size: 100% 25px, 100% 25px;
+            pointer-events: none;
+            z-index: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="typewriter-machine">
+        <!-- 打字机侧边装饰 -->
+        <div class="typewriter-side left"></div>
+        <div class="typewriter-side right"></div>
+        
+        <!-- 打字机旋钮 -->
+        <div class="typewriter-knob knob-1"></div>
+        <div class="typewriter-knob knob-2"></div>
+        
+        <!-- 品牌标志 -->
+        <div class="brand-label">ROYAL TYPEWRITER</div>
+        
+        <!-- 打字机面板 -->
+        <div class="typewriter-panel">
+            <!-- 打字机纸张纹理 -->
+            <div class="typewriter-texture"></div>
+            
+            <!-- 打字显示区域 -->
+            <div class="typing-display">
+                <div class="typing-line line-pre-3" id="line-pre-3"></div>
+                <div class="typing-line line-pre-2" id="line-pre-2"></div>
+                <div class="typing-line line-pre-1" id="line-pre-1"></div>
+                <div class="typing-line line-current" id="line-current">开始打字练习</div>
+                <div class="typing-line line-prev" id="line-prev"></div>
+            </div>
+        </div>
+        
+        <!-- 输入区域 -->
+        <div class="input-section">
+            <div class="input-container">
+                <input type="text" class="typing-input" id="typing-input" placeholder="在这里输入上面的文本..." autocomplete="off">
+            </div>
+        </div>
+        
+        <!-- 键盘和控制区域 -->
+        <div class="keyboard-area">
+            <div class="stats">
+                <div class="stat-item">
+                    <div class="stat-value" id="accuracy">100%</div>
+                    <div class="stat-label">准确率</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="speed">0</div>
+                    <div class="stat-label">字/分钟</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="progress">0%</div>
+                    <div class="stat-label">进度</div>
+                </div>
+            </div>
+            
+            <div class="controls">
+                <button class="typewriter-btn" id="reset-btn"><i class="fas fa-redo"></i> 重置</button>
+                <button class="typewriter-btn reset" id="new-text-btn"><i class="fas fa-sync"></i> 新文本</button>
+            </div>
+        </div>
+        
+        <!-- 打字机脚 -->
+        <div class="typewriter-feet left"></div>
+        <div class="typewriter-feet right"></div>
+    </div>
+
+    <script>
+        // 练习文本库
+        const practiceTexts = [
+            "人工智能是计算机科学的一个分支，它企图了解智能的实质",
+            "机器学习是人工智能的核心，是使计算机具有智能的根本途径",
+            "深度学习是机器学习的一个分支，它试图使用包含复杂结构的神经网络",
+            "自然语言处理是人工智能和语言学领域的分支学科，研究实现人与计算机之间用自然语言进行有效通信",
+            "计算机视觉是一门研究如何使机器看的科学，用摄影机和电脑代替人眼对目标进行识别和测量",
+            "算法是解决特定问题的一系列清晰指令，代表着用系统的方法描述解决问题的策略机制",
+            "大数据是指无法在一定时间范围内用常规软件工具进行捕捉、管理和处理的数据集合",
+            "云计算是通过网络提供可伸缩的分布式计算能力，是一种按使用量付费的模式",
+            "区块链是一个分布式数据库，是一串使用密码学方法相关联产生的数据块",
+            "物联网是指通过各种信息传感器、射频识别技术、全球定位系统等装置与技术，实时采集任何需要监控、连接、互动的物体或过程",
+            "前端开发是创建Web页面或App等前端界面呈现给用户的过程，通过HTML、CSS及JavaScript以及衍生出来的各种技术、框架、解决方案，来实现互联网产品的用户界面交互",
+            "后端架构是软件应用程序中处理业务逻辑、数据存储和安全性的部分，它通常包括服务器、应用程序和数据库"
+        ];
+        
+        // 当前练习文本
+        let currentText = "";
+        let currentIndex = 0;
+        let startTime = null;
+        let isPlaying = false;
+        let correctCount = 0;
+        let totalTyped = 0;
+        let timerInterval = null;
+        
+        // DOM元素
+        const typingInput = document.getElementById('typing-input');
+        const linePre3 = document.getElementById('line-pre-3');
+        const linePre2 = document.getElementById('line-pre-2');
+        const linePre1 = document.getElementById('line-pre-1');
+        const lineCurrent = document.getElementById('line-current');
+        const linePrev = document.getElementById('line-prev');
+        const resetBtn = document.getElementById('reset-btn');
+        const newTextBtn = document.getElementById('new-text-btn');
+        const accuracyElement = document.getElementById('accuracy');
+        const speedElement = document.getElementById('speed');
+        const progressElement = document.getElementById('progress');
+        
+        // 初始化练习
+        function initPractice() {
+            // 随机选择练习文本
+            currentText = practiceTexts[Math.floor(Math.random() * practiceTexts.length)];
+            currentIndex = 0;
+            correctCount = 0;
+            totalTyped = 0;
+            isPlaying = false;
+            
+            // 更新UI
+            updateTypingDisplay();
+            updateStats();
+            
+            // 清空输入框
+            typingInput.value = '';
+            typingInput.classList.remove('error', 'correct');
+            typingInput.focus();
+            
+            // 清除计时器
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+        }
+        
+        // 更新打字显示
+        function updateTypingDisplay() {
+            const text = currentText;
+            
+            // 设置预显示行（前三个字符）
+            linePre3.textContent = text.substring(currentIndex, currentIndex + 30);
+            linePre2.textContent = text.substring(currentIndex, currentIndex + 20);
+            linePre1.textContent = text.substring(currentIndex, currentIndex + 10);
+            
+            // 设置当前字符
+            const currentChar = text.substring(currentIndex, currentIndex + 1);
+            lineCurrent.textContent = currentChar || "练习完成！";
+            
+            // 设置上一个字符
+            if (currentIndex > 0) {
+                linePrev.textContent = text.substring(currentIndex - 10, currentIndex);
+            } else {
+                linePrev.textContent = "";
+            }
+            
+            // 更新进度
+            const progress = text.length > 0 ? Math.round((currentIndex / text.length) * 100) : 0;
+            progressElement.textContent = `${progress}%`;
+        }
+        
+        // 开始练习
+        function startPractice() {
+            if (isPlaying) return;
+            
+            isPlaying = true;
+            startTime = new Date();
+            
+            // 开始计时器
+            timerInterval = setInterval(updateStats, 1000);
+        }
+        
+        // 更新统计数据
+        function updateStats() {
+            if (!startTime) return;
+            
+            // 计算准确率
+            const accuracy = totalTyped > 0 ? Math.round((correctCount / totalTyped) * 100) : 100;
+            accuracyElement.textContent = `${accuracy}%`;
+            
+            // 计算速度（字/分钟）
+            const now = new Date();
+            const minutes = (now - startTime) / 60000;
+            const speed = minutes > 0 ? Math.round(currentIndex / minutes) : 0;
+            speedElement.textContent = speed;
+        }
+        
+        // 检查输入
+        function checkInput() {
+            const input = typingInput.value;
+            const targetChar = currentText[currentIndex];
+            
+            if (!input || !targetChar) return;
+            
+            // 增加总输入计数
+            totalTyped++;
+            
+            // 检查输入是否正确
+            const isCorrect = input === targetChar;
+            
+            if (isCorrect) {
+                // 输入正确
+                typingInput.classList.remove('error');
+                typingInput.classList.add('correct');
+                correctCount++;
+                
+                // 移动到下一个字符
+                currentIndex++;
+                
+                // 检查是否完成练习
+                if (currentIndex >= currentText.length) {
+                    clearInterval(timerInterval);
+                    timerInterval = null;
+                    lineCurrent.textContent = "✓ 练习完成！";
+                    typingInput.disabled = true;
+                    
+                    // 1秒后启用输入框
+                    setTimeout(() => {
+                        typingInput.disabled = false;
+                    }, 1000);
+                }
+                
+                // 清空输入框并更新UI
+                setTimeout(() => {
+                    typingInput.value = '';
+                    typingInput.classList.remove('correct');
+                    updateTypingDisplay();
+                }, 100);
+            } else {
+                // 输入错误
+                typingInput.classList.remove('correct');
+                typingInput.classList.add('error');
+            }
+            
+            // 更新统计数据
+            updateStats();
+        }
+        
+        // 事件监听
+        resetBtn.addEventListener('click', initPractice);
+        newTextBtn.addEventListener('click', function() {
+            initPractice();
+            // 添加一点视觉反馈
+            this.classList.add('clicked');
+            setTimeout(() => this.classList.remove('clicked'), 300);
+        });
+        
+        typingInput.addEventListener('input', function() {
+            if (!isPlaying && currentIndex < currentText.length) {
+                startPractice();
+            }
+            checkInput();
+        });
+        
+        // 添加键盘快捷键
+        document.addEventListener('keydown', function(event) {
+            // Ctrl+R 重置
+            if (event.ctrlKey && event.key === 'r') {
+                initPractice();
+                event.preventDefault();
+            }
+            
+            // Ctrl+N 新文本
+            if (event.ctrlKey && event.key === 'n') {
+                initPractice();
+                event.preventDefault();
+            }
+            
+            // Esc 清空输入框
+            if (event.key === 'Escape') {
+                typingInput.value = '';
+                typingInput.classList.remove('error', 'correct');
+                event.preventDefault();
+            }
+        });
+        
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initPractice();
+            
+            // 添加打字机启动声音效果（视觉）
+            setTimeout(() => {
+                typingInput.placeholder = "准备好开始打字...";
+                lineCurrent.style.transform = "scale(1.05)";
+                setTimeout(() => {
+                    lineCurrent.style.transform = "scale(1)";
+                }, 200);
+            }, 500);
+        });
+        
+        // 添加打字机按键声音效果（视觉反馈）
+        typingInput.addEventListener('keydown', function(event) {
+            // 排除控制键
+            if (event.key.length === 1 || event.key === 'Backspace' || event.key === 'Enter') {
+                // 添加按键动画效果
+                this.style.transform = "translateY(2px)";
+                setTimeout(() => {
+                    this.style.transform = "translateY(0)";
+                }, 100);
+            }
+        });
+    </script>
+</body>
+</html>

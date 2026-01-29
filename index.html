@@ -489,7 +489,7 @@
         const wordBank = [];
         const insertList = [];
 
-        const baseTarget = 5;
+        const baseTarget = 2;
         // 一次错误惩罚多少分
         const penalty = 5;
 
@@ -651,6 +651,7 @@
         // 开始新的练习组
         function startNewExercise() {
             generateNewExercise();
+            updateStats();
             renderWords();
             startExercise();
         }
@@ -680,6 +681,7 @@
             let diffCount = 0
             while (true) {
                 scoreMap.forEach((v, k) => {
+                    //console.log("== k " + k + " v " + v + " currentTarget " + currentTarget)
                     if (v < currentTarget && selectList.length < 30) {
                         diffCount += currentTarget - v
                         if (!selectList.includes(k)) {
@@ -959,7 +961,7 @@
                     // completedCount++;
                     moveToNextInput();
                 }
-                console.log("000")
+                // console.log("000")
                 return;
             }
 
@@ -975,7 +977,7 @@
                 updateScore(word, true)
                 // 更新得分显示
                 updateWordScore(word);
-                console.log("111")
+                // console.log("111")
             } else if (value.length > 0) {
                 // 输入有内容但不正确
                 hasErrorInCurrentInput = true;
@@ -984,7 +986,7 @@
                 updateScore(word, false)
                 // 更新得分显示
                 updateWordScore(word);
-                console.log("222")
+                // console.log("222")
             }
             updateStats();
         }

@@ -874,7 +874,9 @@
                 if (currentExercise.length > count) {
                     break
                 }
-                currentExercise.push(item)
+                if (getScore(item) < currentTarget) {
+                    currentExercise.push(item)
+                }
             }
             // console.log("2")
 

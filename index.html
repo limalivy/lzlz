@@ -521,6 +521,8 @@
 
         let lastIsInError = false
 
+        let saveCount = 0
+
 
 
 
@@ -770,6 +772,7 @@
                 title: "自动循环打字练习",
                 wordsPerGroup: 10
             };
+            saveCount = saved ? saved.lastTime : 0;
             exerciseConfig = saved ? saved.exerciseConfig : defaultConfig;
             console.log("loadFromLoacl scoreMap size " + scoreMap.size)
             if (scoreMap.size == 0) {
@@ -1270,8 +1273,8 @@
             wordBankInput.value = lines.join('\n');
         }
 
-        function getScore(item){
-            if(scoreMap.has(item)) {
+        function getScore(item) {
+            if (scoreMap.has(item)) {
                 return scoreMap.get(item)
             }
             return 0
@@ -1306,12 +1309,20 @@
         }
 
         function saveConfig() {
-            // console.log("saveConfig")
+            let tryCount = saveCount + 1
+            const saved = loadConfig()
+            let lastCount = saved ? saved.lastTime : 0;
+            if (tryCount < lastCount) {
+                return
+            }
+            saveCount++
+            console.log("saveConfig " + saveCount)
             const data = {
                 scoreMap: Array.from(scoreMap.entries()),
                 currentTarget,
                 errorSet: Array.from(errorSet),
-                exerciseConfig: exerciseConfig
+                exerciseConfig: exerciseConfig,
+                lastTime: saveCount
             };
             localStorage.setItem('typingData', JSON.stringify(data));
         }
@@ -1329,7 +1340,8 @@
                     exerciseConfig: data.exerciseConfig || {
                         title: "自动循环打字练习",
                         wordsPerGroup: 10
-                    }
+                    },
+                    lastTime: data.lastTime || 0
                 };
             } catch (e) {
                 console.error('加载数据失败:', e);

@@ -1102,9 +1102,9 @@
         // 检查字词
         function checkWord(index, value, forceCheck = false, space = false) {
             if (!isActive || index !== currentIndex) return;
-
             const inputEl = document.getElementById(`word-input-${index}`);
             const word = currentExercise[index];
+            //console.info("word " + word + " value " + value + " checkMode " + checkMode + " autoCheckLen " + autoCheckLen + codeMap.get(word))
 
             if (space && value.trim() === '$$$') {
                 errorSet.delete(word)
@@ -1306,6 +1306,8 @@
 
         // 设置字词库
         function setWordBank(advancedStr, newWordBank, hasSpace) {
+            autoCheckLen = 0
+            checkMode = 0
             try {
                 let advanced = JSON.parse(advancedStr);
                 checkMode = advanced?.mode || 0
